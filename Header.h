@@ -26,7 +26,7 @@ extern double printCostPerPage;
 extern double scanCostPerPage;
 
 const std::string filename = "users.txt";
-int counter = 0;
+int counter = users.size();
 
 std::string generateUserId();
 void loadUsersFromFile();
@@ -50,7 +50,7 @@ double printCostPerPage = 0.20;
 double scanCostPerPage = 0.10;
 
 std::string generateUserId() {
-    return "user" + std::to_string(counter++);
+    return "User" + std::to_string(counter++);
 }
 
 void loadUsersFromFile() {
