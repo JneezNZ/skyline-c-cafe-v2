@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <regex>
 #include <fstream>
+#include <cstdlib>
 
 struct alluser {
     std::string name;
@@ -40,6 +41,8 @@ void endBrowsing(const std::string& userID);
 void Billdoc(const std::string& email, double print, double scan, double internet, double debt);
 bool loginAdmin();
 
+void mainMenu();
+
 void adminMenu();
 void viewAllUsers();
 void deleteUser();
@@ -48,6 +51,11 @@ void editUser();
 std::unordered_map<std::string, alluser> users;
 double printCostPerPage = 0.20;
 double scanCostPerPage = 0.10;
+
+
+void clearConsole() {
+    system("cls");  // Clears the screen on Windows
+}
 
 std::string generateUserId() {
     return "User" + std::to_string(counter++);
@@ -88,12 +96,14 @@ bool isValidEmail(const std::string& email) {
     const std::regex pattern(R"((^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$))");
     if (std::regex_match(email, pattern)) {
         std::cout << "Email \"" << email << "\" is valid.\n";
+        return true;
     }
     else {
-        std::cout << "Email \"" << email << "\" is invalid. Please try again\n";
+
+        return false;
     }
 
-    return true; 
+    
 }
 
 bool isValidPassword(const std::string& password) {
@@ -119,8 +129,20 @@ bool isValidPassword(const std::string& password) {
 
 void registerUser() {
     std::string name, email, password;
+    while(true){
     std::cout << "Enter your name: ";
     std::getline(std::cin, name);
+    std::regex nameRegex("^[A-Za-z\\s]+$"); 
+
+    if (!std::regex_match(name, nameRegex)) {
+        std::cout << "Invalid name. Please enter a name containing only alphabetic characters and spaces.\n";
+        continue;
+    }
+    break;
+
+    
+    
+}
 
     while (true) {
         std::cout << "Enter your email: ";
@@ -132,7 +154,7 @@ void registerUser() {
             continue;
         }
 
-        // Check if the email is already registered
+        
         if (users.find(email) != users.end()) {
             std::cout << "User with this email: \"" << email << "\" is already registered. Please type a different email.\n";
         }
@@ -149,6 +171,9 @@ void registerUser() {
             break;
         }
     }
+    alluser newUser = { name, email, password, generateUserId(), time(nullptr) };
+    users[email] = newUser; // Add the user to the in-memory map
+    saveUserToFile(newUser);
 }
 
     
@@ -166,10 +191,12 @@ bool loginUser() {
         currentUserEmail = email; // Store email of the logged-in user
         std::cout << "Login successful!\n";
         return true;
+    }else{
+        std::cout << "Invalid email or password.\n";
+        return false;
     }
-
-    std::cout << "Invalid email or password.\n";
-    return false;
+    
+    
 }
 
 std::string getCurrentLoggedInUserEmail() {
@@ -309,8 +336,10 @@ bool loginAdmin() {
 
 void viewAllUsers() {
     for (const auto& i : users) {
-        const auto& user = i.second;
-        std::cout << "Name: " << user.name << ", Email: " << user.email << ", User ID: " << user.userID << "\n";
+        std::cout << "Name: " << i.second.name << std::endl;
+        std::cout << "Email: " << i.second.email << std::endl;
+        std::cout << "UserID: " << i.second.userID << std::endl;
+        std::cout << "-------------------------------\n";
     }
 }
 
@@ -330,19 +359,87 @@ void deleteUser() {
 
 void editUser() {
     std::string email;
-    std::cout << "Enter email of user to edit: ";
+    std::cout << "Enter the email of the user you want to edit: ";
     std::getline(std::cin, email);
 
-    auto it = users.find(email);
-    if (it != users.end()) {
-        auto& user = it->second;
-        std::cout << "Editing user: " << user.name << "\n";
-        // Implement additional user editing functionality here.
+    if (users.find(email) == users.end()) {
+        std::cout << "User with email \"" << email << "\" not found.\n";
+        return;
     }
-    else {
-        std::cout << "User not found.\n";
+
+    alluser& user = users[email];
+    int choice = 0;
+
+    std::cout << "\nEditing user: " << user.name << " (" << user.email << ")\n";
+    std::cout << "1) Name\n";
+    std::cout << "2) Email\n";
+    std::cout << "3) Password\n";
+    std::cout << "4) Cancel\n";
+
+    std::cin >> choice;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    switch (choice) {
+    case 1: {
+        std::cout << "Enter new name: ";
+        std::getline(std::cin, user.name);
+        std::cout << "Name has been successfully updated.\n";
+        adminMenu();
+        break;
     }
+    case 2: {
+        std::string newEmail;
+        std::cout << "Enter new email: ";
+        std::getline(std::cin, newEmail);
+
+        if (users.find(newEmail) != users.end()) {
+            std::cout << "Email \"" << newEmail << "\" is already in use by another user.\n";
+            return;
+        }
+        user.email = newEmail;
+        users[newEmail] = user;
+        users.erase(email);
+        std::cout << "Email updated successfully.\n";
+        adminMenu();
+        break;
+    }
+    case 3: {
+        std::cout << "Enter new password: ";
+        std::getline(std::cin, user.password);
+        std::cout << "Password has been successfully updated.\n";
+        adminMenu();
+        break;
+    }
+    case 4:
+        std::cout << "Edit cancelled.\n";
+        adminMenu();
+        return;
+    default:
+        std::cout << "Invalid choice.\n";
+        adminMenu();
+        return;
+    }
+
+    // Save the updated user details back to the file
+    std::ofstream file("users.txt");
+    if (!file) {
+        std::cout << "Error loading the file.\n";
+        return;
+    }
+
+    for (const auto& entry : users) {
+        const alluser& user = entry.second;
+        file << user.name << std::endl
+            << user.email << std::endl
+            << user.password << std::endl
+            << user.userID << std::endl
+            << user.joiningDate << std::endl;
+    }
+    file.close();
+
+    std::cout << "User details updated successfully in the file.\n";
 }
+
 
 double Tcost; 
 
@@ -361,6 +458,7 @@ void logoutUser(const std::string& userID) {
 
     
     std::cout << "Logging out...\n";
+    mainMenu();
 
 
 
@@ -370,6 +468,8 @@ void logoutUser(const std::string& userID) {
    
      
 }
+
+
 
 void mainMenu() {
     int mainChoice;

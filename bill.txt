@@ -22,3 +22,43 @@ Internet: $0
 Total Outstanding: $7.2
 _____________________________________________________
 
+Account: 
+Print: $40
+Scan: $0
+Internet: $0
+
+Total Outstanding: $40
+_____________________________________________________
+
+Account: 
+Print: $40
+Scan: $0
+Internet: $0
+
+Total Outstanding: $40
+_____________________________________________________
+
+Account: 
+Print: $40
+Scan: $30
+Internet: $0
+
+Total Outstanding: $70
+_____________________________________________________
+
+Account: 
+Print: $0
+Scan: $0
+Internet: $0
+
+Total Outstanding: $0
+_____________________________________________________
+
+Account: 
+Print: $0
+Scan: $0
+Internet: $0
+
+Total Outstanding: $0
+_____________________________________________________
+
