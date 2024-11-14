@@ -39,6 +39,7 @@ void startBrowsing(const std::string& userID);
 void endBrowsing(const std::string& userID);
 void Billdoc(const std::string& email, double print, double scan, double internet, double debt);
 bool loginAdmin();
+void mainMenu();
 
 void adminMenu();
 void viewAllUsers();
@@ -74,81 +75,99 @@ void loadUsersFromFile() {
 }
 
 void saveUserToFile(const alluser& user) {
-    std::ofstream file(filename, std::ios::app);
+    std::ofstream file("user_data.txt", std::ios::app);
     if (file) {
         file << user.name << "\n" << user.email << "\n" << user.password << "\n"
             << user.userID << "\n" << user.joiningDate << "\n"
-        << "_____________________________________________________\n\n\n\n";
+            << "_____________________________________________________\n\n\n\n";
     }
     else {
         std::cout << "Error saving user data to file.\n";
     }
 }
+
 bool isValidEmail(const std::string& email) {
     const std::regex pattern(R"((^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$))");
     if (std::regex_match(email, pattern)) {
         std::cout << "Email \"" << email << "\" is valid.\n";
-    }
-    else {
-        std::cout << "Email \"" << email << "\" is invalid. Please try again\n";
-    }
-
-    return true; 
-}
-
-bool isValidPassword(const std::string& password) {
-    // Regular expression pattern for password validation
-    const std::regex passwordPattern(R"((?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,})");
-
-    // Check if password matches the pattern
-    if (std::regex_match(password, passwordPattern)) {
-        std::cout << "Password \"" << password << "\" \n";
         return true;
     }
     else {
-        std::cout << "Password is invalid. Requirements:\n";
-        std::cout << "- At least 8 characters long\n";
-        std::cout << "- At least one uppercase letter\n";
-        std::cout << "- At least one lowercase letter\n";
-        std::cout << "- At least one digit (0-9)\n";
-        std::cout << "- At least one special character (!@#$%^&*)\n";
+        std::cout << "Email \"" << email << "\" is invalid. Please try again\n";
         return false;
     }
+}
 
+bool isValidPassword(const std::string& password) {
+    const std::regex passwordPattern(R"((?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,})");
+
+    if (std::regex_match(password, passwordPattern)) {
+        std::cout << "Password \"" << password << "\" is valid.\n";
+        return true;
+    }
+    else {
+        std::cout << "Password is invalid. Requirements:\n"
+            << "- At least 8 characters long\n"
+            << "- At least one uppercase letter\n"
+            << "- At least one lowercase letter\n"
+            << "- At least one digit (0-9)\n"
+            << "- At least one special character (!@#$%^&*)\n";
+        return false;
+    }
+}
+time_t getCurrentDateAsTimeT() {
+    // Get the current time as `time_t`
+    time_t now = time(nullptr);
+
+    // Use `tm` structure for local time
+    struct tm localTime;
+
+    // Use `localtime_s` to safely populate `localTime` with the current local time
+    if (localtime_s(&localTime, &now) != 0) {
+        std::cerr << "Failed to retrieve local time.\n";
+        return -1; // Return an error value if localtime_s fails
+    }
+
+    // Zero out hour, minute, and second to get midnight of the current date
+    localTime.tm_hour = 0;
+    localTime.tm_min = 0;
+    localTime.tm_sec = 0;
+
+    // Convert back to `time_t` representing midnight of the current date
+    return mktime(&localTime);
 }
 
 void registerUser() {
-    std::string name, email, password;
+    alluser user;
     std::cout << "Enter your name: ";
-    std::getline(std::cin, name);
+    std::getline(std::cin, user.name);
 
     while (true) {
         std::cout << "Enter your email: ";
-        std::getline(std::cin, email);
+        std::getline(std::cin, user.email);
 
-        // Check if the email is valid
-        if (!isValidEmail(email)) {
-            std::cout << "Invalid email format. Please enter a valid email.\n";
-            continue;
-        }
+        if (!isValidEmail(user.email)) continue;
 
-        // Check if the email is already registered
-        if (users.find(email) != users.end()) {
-            std::cout << "User with this email: \"" << email << "\" is already registered. Please type a different email.\n";
+        if (users.find(user.email) != users.end()) {
+            std::cout << "User with this email: \"" << user.email << "\" is already registered. Please type a different email.\n";
         }
         else {
-            
-            break; 
-        }
-    }
-    while (true)
-    {
-        std::cout << "Enter your password: ";
-        std::getline(std::cin, password);
-        if (isValidPassword(password)) {
             break;
         }
     }
+   
+
+    while (true) {
+        std::cout << "Enter your password: ";
+        std::getline(std::cin, user.password);
+        if (isValidPassword(user.password)) break;
+    }
+
+    user.userID = users.size() + 1; // Assign a new user ID
+    user.joiningDate = getCurrentDateAsTimeT(); // Example joining date
+
+    users[user.email] = user;
+    saveUserToFile(user);
 }
 
     
@@ -177,8 +196,8 @@ std::string getCurrentLoggedInUserEmail() {
 }
 
 void startSession(const std::string& userID) {
-    time_t startTime = time(nullptr);
-    users[userID].sessions.push_back({ startTime, 0 });
+    time_t joiningDate = time(nullptr);
+    users[userID].sessions.push_back({ joiningDate, 0 });
     std::cout << "Session started for user: " << users[userID].name << "\n";
 }
 void processPrintAndScan(const std::string& userID) {
@@ -229,16 +248,16 @@ void endBrowsing(const std::string& userID) {
     session.second = endTime;
 
     double duration = std::difftime(endTime, session.first) / 60;
-    std::cout << "Session ended for user: " << users[userID].name << ", Duration: " << duration << " minutes\n";
+    std::cout << "Browsing session ended for user: " << users[userID].name << ", Duration: " << duration << " minutes\n";
 
     double browsingCost = duration * 0.50;
     std::cout << "Total Browsing Cost: " << browsingCost << std::endl;
 }
 
-void Billdoc(const std::string& email, double print, double scan, double internet, double debt) {
+void Billdoc(const std::string& userID, double print, double scan, double internet, double debt) {
     std::ofstream file("bill.txt", std::ios::app);
     if (file.is_open()) {
-        file << "Account: " << email << "\n"
+        file << "Account: " << users[userID].email << "\n"
             << "Print: $" << print << "\n"
             << "Scan: $" << scan << "\n"
             << "Internet: $" << internet << "\n\n"
@@ -355,9 +374,11 @@ void logoutUser(const std::string& userID) {
     double scanCost = users[userID].totalScanCost;
     double internetCost = Tcost; 
     double totalDebt = printCost + scanCost + internetCost;
+    const std::string& UID = users[userID].name;
+
 
     
-    Billdoc(users[userID].name, printCost, scanCost, internetCost, totalDebt);
+    Billdoc(UID, printCost, scanCost, internetCost, totalDebt);
 
     
     std::cout << "Logging out...\n";
@@ -365,7 +386,7 @@ void logoutUser(const std::string& userID) {
 
 
 
-    
+    mainMenu(); 
 
    
      

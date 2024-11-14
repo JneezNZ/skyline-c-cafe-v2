@@ -31,7 +31,7 @@
     <Text Include="bill.txt">
       <Filter>Source Files</Filter>
     </Text>
-    <Text Include="users.txt">
+    <Text Include="user_data.txt">
       <Filter>Source Files</Filter>
     </Text>
   </ItemGroup>
