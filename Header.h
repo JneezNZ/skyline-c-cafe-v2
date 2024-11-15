@@ -357,20 +357,36 @@ bool loginAdmin() {
 
 
 void viewAllUsers() {
-    if (users.empty()) {
-        std::cout << "No users found in the system.\n";
+    std::ifstream file("user_data.txt");
+
+    if (!file) {
+        std::cout << "No user data file found.\n";
         return;
     }
 
+    std::string name, email, password, userID, joiningDate, separator;
+    std::cout << "Registered Users:\n";
+    std::cout << "-------------------------------------------------\n";
 
-    std::cout << "Displaying all users:\n";
-    std::cout << "---------------------------------------------------------------\n";
-
-    for (const auto& i : users) {
-        const auto& user = i.second;
-        std::cout << "Name: " << user.name << "\n" << "Email: " << user.email << "\n" << ", User ID: " << user.userID << "\n" << user.joiningDate << "\n";
+    // Read each user entry from the file
+    while (std::getline(file, name) &&
+        std::getline(file, email) &&
+        std::getline(file, password) &&
+        std::getline(file, userID) &&
+        std::getline(file, joiningDate) &&
+        std::getline(file, separator)) {
+        // Display all user fields
+        std::cout << "Name: " << name << "\n";
+        std::cout << "Email: " << email << "\n";
+        std::cout << "Password: " << password << "\n";
+        std::cout << "User ID: " << userID << "\n";
+        std::cout << "Joining Date: " << joiningDate << "\n";
+        std::cout << "-------------------------------------------------\n";
     }
+
+    file.close();
 }
+
 
 void deleteUser() {
     std::string email;
