@@ -368,7 +368,7 @@ void viewAllUsers() {
 
     for (const auto& i : users) {
         const auto& user = i.second;
-        std::cout << "Name: " << user.name << ", Email: " << user.email << ", User ID: " << user.userID << "\n";
+        std::cout << "Name: " << user.name << "\n" << "Email: " << user.email << "\n" << ", User ID: " << user.userID << "\n" << user.joiningDate << "\n";
     }
 }
 
