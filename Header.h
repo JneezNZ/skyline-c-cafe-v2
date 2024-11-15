@@ -1,4 +1,6 @@
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
+
 
 #include <iostream>
 #include <vector>
@@ -14,7 +16,7 @@ struct alluser {
     std::string email;
     std::string password;
     std::string userID;
-    time_t joiningDate = 0;
+    std::string joiningDate;
     std::vector<std::pair<time_t, time_t>> sessions;
     double totalPrintCost = 0;
     double totalScanCost = 0;
@@ -54,6 +56,14 @@ std::string generateUserId() {
     return "user" + std::to_string(counter++);
 }
 
+// **** //
+std::string formatJoiningDate(time_t date) {
+    char buffer[80];
+    struct tm* timeinfo = localtime(&date);
+    strftime(buffer, sizeof(buffer), "%A, %d %B %Y  %I:%M:%S %p", timeinfo);  // Format as desired
+    return std::string(buffer);
+}
+
 void loadUsersFromFile() {
     std::ifstream file(filename);
     if (!file) {
@@ -61,14 +71,21 @@ void loadUsersFromFile() {
         return;
     }
 
-    std::string name, email, password, userID;
-    time_t joiningDate;
+    std::string name, email, password, userID, joiningDateStr;
+
+    //*****//
+    //time_t joiningDate;
+
     while (file >> std::ws && std::getline(file, name) &&
         std::getline(file, email) &&
         std::getline(file, password) &&
         std::getline(file, userID) &&
-        (file >> joiningDate)) {
-        alluser user = { name, email, password, userID, joiningDate };
+
+        //****//
+        std::getline(file, joiningDateStr)) {
+
+        //(file >> joiningDate)) {
+        alluser user = { name, email, password, userID, joiningDateStr };
         users[email] = user;
         file.ignore();
     }
@@ -80,6 +97,8 @@ void saveUserToFile(const alluser& user) {
         file << user.name << "\n" << user.email << "\n" << user.password << "\n"
             << user.userID << "\n" << user.joiningDate << "\n"
             << "_____________________________________________________\n\n\n\n";
+
+        std::cout << "User data saved to file.\n";
     }
     else {
         std::cout << "Error saving user data to file.\n";
@@ -155,7 +174,7 @@ void registerUser() {
             break;
         }
     }
-   
+
 
     while (true) {
         std::cout << "Enter your password: ";
@@ -164,13 +183,21 @@ void registerUser() {
     }
 
     user.userID = users.size() + 1; // Assign a new user ID
-    user.joiningDate = getCurrentDateAsTimeT(); // Example joining date
+    //user.joiningDate = getCurrentDateAsTimeT(); // Example joining date
+
+    //*******//
+    time_t currentTime = time(nullptr);
+    std::string formattedJoiningDate = formatJoiningDate(currentTime);
+    user.joiningDate = formattedJoiningDate;
+
 
     users[user.email] = user;
     saveUserToFile(user);
+    std::cout << "User joined on: " << formatJoiningDate(currentTime) << std::endl;
+
+
 }
 
-    
 
 bool loginUser() {
     std::string email, password;
@@ -184,6 +211,7 @@ bool loginUser() {
     if (it != users.end() && it->second.password == password) {
         currentUserEmail = email; // Store email of the logged-in user
         std::cout << "Login successful!\n";
+        std::cout << "User joined on: " << it->second.joiningDate << std::endl;
         return true;
     }
 
@@ -233,7 +261,7 @@ void endSession(const std::string& userID) {
     double duration = std::difftime(endTime, session.first) / 60;
     std::cout << "Session ended for user: " << users[userID].name << ", Duration: " << duration << " minutes\n";
 
-    
+
 }
 
 void startBrowsing(const std::string& userID) {
@@ -276,6 +304,7 @@ void adminMenu() {
     std::cout << "2) Delete a user\n";
     std::cout << "3) Edit a user\n";
     std::cout << "4) Exit\n";
+    std::cout << "Enter your choice: ";
     std::cin >> choice;
     std::cin.ignore();
 
@@ -326,7 +355,17 @@ bool loginAdmin() {
     return false;
 }
 
+
 void viewAllUsers() {
+    if (users.empty()) {
+        std::cout << "No users found in the system.\n";
+        return;
+    }
+
+
+    std::cout << "Displaying all users:\n";
+    std::cout << "---------------------------------------------------------------\n";
+
     for (const auto& i : users) {
         const auto& user = i.second;
         std::cout << "Name: " << user.name << ", Email: " << user.email << ", User ID: " << user.userID << "\n";
@@ -363,33 +402,31 @@ void editUser() {
     }
 }
 
-double Tcost; 
-
-
+double Tcost;
 
 
 void logoutUser(const std::string& userID) {
-   
+
     double printCost = users[userID].totalPrintCost;
     double scanCost = users[userID].totalScanCost;
-    double internetCost = Tcost; 
+    double internetCost = Tcost;
     double totalDebt = printCost + scanCost + internetCost;
     const std::string& UID = users[userID].name;
 
 
-    
+
     Billdoc(UID, printCost, scanCost, internetCost, totalDebt);
 
-    
+
     std::cout << "Logging out...\n";
 
 
 
 
-    mainMenu(); 
+    mainMenu();
 
-   
-     
+
+
 }
 
 void mainMenu() {
@@ -486,24 +523,19 @@ void mainMenu() {
             break;
         case 4:
             std::cout << "Exiting the program. Goodbye!\n";
-            return;
+            break;
         default:
             std::cout << "Invalid choice, please try again.\n";
             break;
         }
-    
-    
-    
-    
+
+
+
+
     }
 
 
     return;
-
-
-
-
-
 
 }
 
