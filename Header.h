@@ -25,8 +25,8 @@ extern std::unordered_map<std::string, alluser> users;
 extern double printCostPerPage;
 extern double scanCostPerPage;
 
-const std::string filename = "users.txt";
-int counter = 0;
+const std::string filename = "user_data.txt";
+int counter = users.size();
 
 std::string generateUserId();
 void loadUsersFromFile();
@@ -139,8 +139,21 @@ time_t getCurrentDateAsTimeT() {
 
 void registerUser() {
     alluser user;
-    std::cout << "Enter your name: ";
-    std::getline(std::cin, user.name);
+    while (true) {
+        std::cout << "Enter your name: ";
+        std::getline(std::cin, user.name);
+        std::regex nameRegex("^[A-Za-z\\s]+$");
+
+        if (!std::regex_match(user.name, nameRegex)) {
+            std::cout << "Invalid name. Please enter a name containing only alphabetic characters and spaces.\n";
+            continue;
+        }
+        break;
+
+
+
+    }
+
 
     while (true) {
         std::cout << "Enter your email: ";
@@ -328,39 +341,120 @@ bool loginAdmin() {
 
 void viewAllUsers() {
     for (const auto& i : users) {
-        const auto& user = i.second;
-        std::cout << "Name: " << user.name << ", Email: " << user.email << ", User ID: " << user.userID << "\n";
+        std::cout << "User ID: " << i.second.userID << std::endl;
+        std::cout << "Name: " << i.second.name << std::endl;
+        std::cout << "Email: " << i.second.email << std::endl;
+        std::cout << "-------------------------------\n";
+        adminMenu();
     }
+
 }
 
 void deleteUser() {
     std::string email;
-    std::cout << "Enter email of user to delete: ";
+    std::cout << "Type the email of the user you want to delete: ";
     std::getline(std::cin, email);
 
-    if (users.find(email) != users.end()) {
-        users.erase(email);
-        std::cout << "User deleted successfully.\n";
+    if (users.find(email) == users.end()) {
+        std::cout << "User with the email \"" << email << "\" has not been found.\n";
+        return; // Exit if the user is not found
     }
-    else {
-        std::cout << "User not found.\n";
+
+    users.erase(email);
+    std::ofstream file("user_data.txt");
+    if (!file) {
+        std::cout << "File could not load. Please try again.\n";
+        return; // Exit if the file cannot be opened
     }
+
+    for (const auto& entry : users) {
+        const alluser& user = entry.second;
+        file << user.name << "\n"
+            << user.email << "\n"
+            << user.password << "\n"
+            << user.userID << "\n"
+            << user.joiningDate << "\n";
+    }
+
+    file.close();
+    std::cout << "User with email " << email << " has been deleted from the file.\n";
+    adminMenu();
+
 }
 
 void editUser() {
     std::string email;
-    std::cout << "Enter email of user to edit: ";
+    std::cout << "Enter the email of the user you want to edit: " << std::endl;
     std::getline(std::cin, email);
+    if (users.find(email) == users.end()) {
+        std::cout << "User with email \"" << email << "\" not found.\n";
+        return;
+    }
+    alluser& user = users[email];
+    int choice{};
+    std::cout << "\nEditing user: " << user.name << " (" << user.email << ")\n";
+    std::cout << "1) Name" << std::endl;
+    std::cout << "2) Email" << std::endl;
+    std::cout << "3) Password" << std::endl;
+    std::cout << "4) Cancel" << std::endl;
+    std::cin >> choice;
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    switch (choice) {
+    case 1: {
+        std::cout << "Enter new name: " << std::endl;
+        std::getline(std::cin, user.name);
+        std::cout << "Name has been successfully updated." << std::endl;
+        adminMenu();
+        break;
+    }
+    case 2: {
+        std::string newEmail;
+        std::cout << "Enter new email: " << std::endl;
+        std::getline(std::cin, newEmail);
+        if (users.find(newEmail) != users.end()) {
+            std::cout << "Email \"" << newEmail << "\" is already in use by another user.\n";
+            return;
+        }
+        user.email = newEmail;
+        users[newEmail] = user;
+        users.erase(email);
+        std::cout << "Email updated successfully.\n";
+        adminMenu();
+        break;
+    }
+    case 3: {
+        std::cout << "Enter new password: " << std::endl;
+        std::getline(std::cin, user.password);
+        std::cout << "Password has been successfully updated." << std::endl;
+        adminMenu();
+        break;
+    }
+    case 4:
+        std::cout << "Edit cancelled." << std::endl;
+        adminMenu();
+        return;
+    default:
+        std::cout << "Invalid choice." << std::endl;
+        adminMenu();
+        return;
+    }
 
-    auto it = users.find(email);
-    if (it != users.end()) {
-        auto& user = it->second;
-        std::cout << "Editing user: " << user.name << "\n";
-        // Implement additional user editing functionality here.
+    std::ofstream file("user_data.txt");
+    if (!file) {
+        std::cout << "Error opening the file." << std::endl;
     }
-    else {
-        std::cout << "User not found.\n";
+    for (const auto& entry : users) {
+        const alluser& user = entry.second;
+        file << user.name << std::endl
+            << user.email << std::endl
+            << user.password << std::endl
+            << user.userID << std::endl
+            << user.joiningDate << std::endl;
     }
+    file.close();
+    std::cout << "User details updated successfully in the file." << std::endl;
+    return;
+
 }
 
 double Tcost; 
