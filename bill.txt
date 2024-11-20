@@ -1,8 +1,8 @@
-Account: 
-Print: $199.8
-Scan: $99.9
-Internet: $0
+Account: Wilson@gmail.com
+Print: NZD 4444.4
+Scan: NZD 2323.2
+Internet: NZD 0
 
-Total Outstanding: $299.7
+Total Outstanding: NZD 6767.6
 _____________________________________________________
 

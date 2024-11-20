@@ -53,7 +53,16 @@ double printCostPerPage = 0.20;
 double scanCostPerPage = 0.10;
 
 std::string generateUserId() {
-    return "user" + std::to_string(counter++);
+    std::string userId;
+    int suffix = 1;
+
+    // Start with the base ID ("User 1", "User 2", etc.)
+    do {
+        userId = "User " + std::to_string(suffix);
+        suffix++;  // Increment the suffix for next iteration
+    } while (users.find(userId) != users.end()); // Keep looping until we find a unique ID
+
+    return userId;
 }
 
 // **** //
@@ -182,7 +191,7 @@ void registerUser() {
         if (isValidPassword(user.password)) break;
     }
 
-    user.userID = users.size() + 1; // Assign a new user ID
+    user.userID = generateUserId(); // Assign a new user ID
     //user.joiningDate = getCurrentDateAsTimeT(); // Example joining date
 
     //*******//
@@ -194,7 +203,7 @@ void registerUser() {
     users[user.email] = user;
     saveUserToFile(user);
     std::cout << "User joined on: " << formatJoiningDate(currentTime) << std::endl;
-
+    std::cout << "User registered with ID: " << user.userID << std::endl;
 
 }
 
@@ -207,12 +216,27 @@ bool loginUser() {
     std::cout << "Enter user password: ";
     std::getline(std::cin, password);
 
-    auto it = users.find(email);
-    if (it != users.end() && it->second.password == password) {
-        currentUserEmail = email; // Store email of the logged-in user
-        std::cout << "Login successful!\n";
-        std::cout << "User joined on: " << it->second.joiningDate << std::endl;
-        return true;
+    std::ifstream file("user_data.txt");
+    if (!file.is_open()) {
+        std::cout << "Error opening user data file.\n";
+        return false;
+    }
+
+    std::string name, storedEmail, storedPassword, userID, joiningDate, separator;
+    while (std::getline(file, name) &&
+        std::getline(file, storedEmail) &&
+        std::getline(file, storedPassword) &&
+        std::getline(file, userID) &&
+        std::getline(file, joiningDate) &&
+        std::getline(file, separator)) {
+
+        // Compare the email and password from the file with the entered ones
+        if (storedEmail == email && storedPassword == password) {
+            currentUserEmail = storedEmail; // Store the email of the logged-in user
+            std::cout << "Login successful!\n";
+            std::cout << "User joined on: " << joiningDate << std::endl;
+            return true;
+        }
     }
 
     std::cout << "Invalid email or password.\n";
@@ -282,28 +306,96 @@ void endBrowsing(const std::string& userID) {
     std::cout << "Total Browsing Cost: " << browsingCost << std::endl;
 }
 
-void Billdoc(const std::string& userID, double print, double scan, double internet, double debt) {
+//*****//
+// Function to generate a bill document for a user
+void Billdoc(const std::string& email, double print, double scan, double internet, double debt) {
+    
+    // Open the bill file in append mode
     std::ofstream file("bill.txt", std::ios::app);
+
     if (file.is_open()) {
-        file << "Account: " << users[userID].email << "\n"
-            << "Print: $" << print << "\n"
-            << "Scan: $" << scan << "\n"
-            << "Internet: $" << internet << "\n\n"
-            << "Total Outstanding: $" << debt << "\n"
+        // Write the bill in the desired format
+        file << "Account: " << currentUserEmail << "\n"
+            << "Print: NZD " << print << "\n"
+            << "Scan: NZD " << scan << "\n"
+            << "Internet: NZD " << internet << "\n\n"
+            << "Total Outstanding: NZD " << debt << "\n"
             << "_____________________________________________________\n\n";
+
+        std::cout << "Bill for " << email << " saved to bill.txt\n";
+        file.flush();
     }
     else {
-        std::cerr << "Unable to open file" << std::endl;
+        std::cerr << "Failed to open bill.txt for writing.\n";
     }
 }
 
+
+
+void Viewbill(const std::string& email) {
+    //std::string email = currentUserEmail;
+    std::ifstream file("bill.txt");
+
+    if (file.is_open()) {
+        std::string line;
+        bool found = false;
+
+        while (std::getline(file, line)) {
+            if (line.find("Account: " + email) != std::string::npos) {
+                found = true;
+                double print = 0.0, scan = 0.0, internet = 0.0, debt = 0.0;
+
+                std::getline(file, line); // Skip "Print" line
+                std::sscanf(line.c_str(), "Print: NZD %lf", &print);
+
+                std::getline(file, line); // Skip "Scan" line
+                std::sscanf(line.c_str(), "Scan: NZD %lf", &scan);
+
+                std::getline(file, line); // Skip "Internet" line
+                std::sscanf(line.c_str(), "Internet: NZD %lf", &internet);
+
+                std::getline(file, line); // Skip "Total Outstanding" line
+                std::sscanf(line.c_str(), "Total Outstanding: NZD %lf", &debt);
+
+                std::cout << "Bill for " << email << ":\n"
+                    << "Print: NZD " << print << "\n"
+                    << "Scan: NZD " << scan << "\n"
+                    << "Internet: NZD " << internet << "\n"
+                    << "Total Outstanding: NZD " << debt << "\n";
+                std::cout << "_____________________________________________________\n";
+                break;
+            }
+        }
+
+        if (!found) {
+            std::cout << "No bill found for " << email << "\n";
+        }
+
+        file.close();
+    }
+    else {
+        std::cerr << "Failed to open bill.txt for reading.\n";
+    }
+}
+
+void viewBillForLoggedInUser() {
+    std::string email = currentUserEmail; // Get logged-in user's email
+    std::cout << "Enter the user's email to view their bill: ";
+    std::getline(std::cin, email);
+    Viewbill(email);// View bill for the logged-in user
+}
+
+
+
 void adminMenu() {
+    //alluser user;
     int choice;
     std::cout << "ADMIN MENU\n";
     std::cout << "1) View all users\n";
     std::cout << "2) Delete a user\n";
     std::cout << "3) Edit a user\n";
-    std::cout << "4) Exit\n";
+    std::cout << "4) View all bills\n";  // Added option to view all bills
+    std::cout << "5) Exit\n";
     std::cout << "Enter your choice: ";
     std::cin >> choice;
     std::cin.ignore();
@@ -318,7 +410,11 @@ void adminMenu() {
     case 3:
         editUser();
         break;
-    case 4:
+    case 4: {
+        viewBillForLoggedInUser();
+        break;
+    }
+    case 5:
         std::cout << "Exiting admin menu...\n";
         break;
     default:
@@ -420,30 +516,36 @@ void editUser() {
 
 double Tcost;
 
-
+//****//
 void logoutUser(const std::string& userID) {
+    // Check if the userID exists in the map
+    if (users.find(userID) != users.end()) {
+        // Get the email of the currently logged-in user
+        const std::string& email = users[userID].email;
 
-    double printCost = users[userID].totalPrintCost;
-    double scanCost = users[userID].totalScanCost;
-    double internetCost = Tcost;
-    double totalDebt = printCost + scanCost + internetCost;
-    const std::string& UID = users[userID].name;
+        // Retrieve the costs (Print, Scan, Internet)
+        double printCost = users[userID].totalPrintCost;
+        double scanCost = users[userID].totalScanCost;
+        double internetCost = Tcost; // Assuming Tcost is your internet cost
 
+        // Calculate the total debt
+        double totalDebt = printCost + scanCost + internetCost;
 
+        // Now generate the bill using the correct email
+        Billdoc(email, printCost, scanCost, internetCost, totalDebt);
 
-    Billdoc(UID, printCost, scanCost, internetCost, totalDebt);
-
-
-    std::cout << "Logging out...\n";
-
-
-
-
-    mainMenu();
-
-
-
+        std::cout << "Logging out...\n";
+        mainMenu();
+    }
+    else {
+        std::cout << "User not found!\n";
+    }
 }
+
+
+
+
+
 
 void mainMenu() {
     int mainChoice;
