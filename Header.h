@@ -331,7 +331,7 @@ void Billdoc(const std::string& email, double print, double scan, double interne
 }
 
 
-
+//******//
 void Viewbill(const std::string& email) {
     //std::string email = currentUserEmail;
     std::ifstream file("bill.txt");
@@ -378,6 +378,7 @@ void Viewbill(const std::string& email) {
     }
 }
 
+//*****//
 void viewBillForLoggedInUser() {
     std::string email = currentUserEmail; // Get logged-in user's email
     std::cout << "Enter the user's email to view their bill: ";
@@ -541,9 +542,6 @@ void logoutUser(const std::string& userID) {
         std::cout << "User not found!\n";
     }
 }
-
-
-
 
 
 
