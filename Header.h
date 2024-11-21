@@ -66,6 +66,11 @@ bool isValidEmail(const std::string& email) {
 }
 
 void viewAllUsers() {
+    if (users.empty())
+    {
+        std::cout << "no user to display\n";
+        std::cout << "-----------------------------";
+    }
     for (const auto& i : users) {
         std::cout << "User ID: " << i.second.userID << std::endl;
         std::cout << "Name: " << i.second.name << std::endl;
@@ -312,6 +317,36 @@ void editUser() {
         adminMenu();
         break;
     }
+    case 2: {
+        std::string newEmail;
+        std::cout << "Enter new email: " << std::endl;
+        std::getline(std::cin, newEmail);
+        if (users.find(newEmail) != users.end()) {
+            std::cout << "Email \"" << newEmail << "\" is already in use by another user.\n";
+            return;
+        }
+        user.email = newEmail;
+        users[newEmail] = user;
+        users.erase(email);
+        std::cout << "Email updated successfully.\n";
+        adminMenu();
+        break;
+    }
+    case 3: {
+        std::cout << "Enter new password: " << std::endl;
+        std::getline(std::cin, user.password);
+        std::cout << "Password has been successfully updated." << std::endl;
+        adminMenu();
+        break;
+    }
+    case 4:
+        std::cout << "Edit cancelled." << std::endl;
+        adminMenu();
+        return;
+    default:
+        std::cout << "Invalid choice." << std::endl;
+        adminMenu();
+        return;
     }
 }
 
