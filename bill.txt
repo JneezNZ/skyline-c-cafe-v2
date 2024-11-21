@@ -1,0 +1,8 @@
+Account: test10@test.com
+Print: NZD 80
+Scan: NZD 78
+Internet: NZD 0
+
+Total Outstanding: NZD 158
+_____________________________________________________
+
