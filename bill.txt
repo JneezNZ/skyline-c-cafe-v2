@@ -6,3 +6,19 @@ Internet: NZD 0
 Total Outstanding: NZD 158
 _____________________________________________________
 
+Account: test1@gmail.com
+Print: NZD 40
+Scan: NZD 23
+Internet: NZD 0
+
+Total Outstanding: NZD 63
+_____________________________________________________
+
+Account: test1@gmail.com
+Print: NZD 480
+Scan: NZD 21.2
+Internet: NZD 0
+
+Total Outstanding: NZD 501.2
+_____________________________________________________
+
