@@ -408,6 +408,7 @@ void adminMenu() {
         break;
     case 5:
         std::cout << "Exiting admin menu...\n";
+        mainMenu(); 
         break;
     default:
         std::cout << "Invalid option, please try again.\n";
