@@ -366,6 +366,7 @@ void viewUserBills() {
     while (std::getline(billFile, line)) {
         // Check if the current line contains the user's email
         if (line.find(email) != std::string::npos) {
+            // Found the user's bill, display the bill's details
             foundBills = true;
             std::cout << "Bill found for user with email: " << email << "\n";
             std::cout << line << std::endl;  // Print the email (part of the bill header)
@@ -380,9 +381,7 @@ void viewUserBills() {
         std::cout << "No bills found for the user with email: " << email << "\n";
     }
     billFile.close();
-    adminMenu();
 }
-
 
 void adminMenu() {
     int choice;
@@ -405,11 +404,11 @@ void adminMenu() {
     case 3:
         editUser();
         break;
-    case 4: viewUserBills();
+    case 4:void viewUserBills();
         break;
     case 5:
         std::cout << "Exiting admin menu...\n";
-        mainMenu();
+        mainMenu(); 
         break;
     default:
         std::cout << "Invalid option, please try again.\n";
