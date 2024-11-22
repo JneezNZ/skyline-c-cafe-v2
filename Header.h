@@ -46,6 +46,7 @@ void adminMenu();
 void viewAllUsers();
 void deleteUser();
 void editUser();
+void autodeleteUser(std::string); 
 
 std::unordered_map<std::string, alluser> users;
 double printCostPerPage = 0.20;
@@ -66,20 +67,25 @@ bool isValidEmail(const std::string& email) {
 }
 
 void viewAllUsers() {
-    if (users.empty())
-    {
-        std::cout << "no user to display\n";
-        std::cout << "-----------------------------";
+    if (users.empty()) {
+        std::cout << "No users to display.\n";
+        std::cout << "-----------------------------\n";
+        adminMenu();
+        return;
     }
-    for (const auto& i : users) {
-        std::cout << "User ID: " << i.second.userID << std::endl;
-        std::cout << "Name: " << i.second.name << std::endl;
-        std::cout << "Email: " << i.second.email << std::endl;
-        std::cout << "-------------------------------\n";
-        
-    }adminMenu();
 
+    for (const auto& i: users) {
+        if (i.second.name.empty() || i.second.email.empty()) {
+            continue; // Skip invalid entries
+        }
+        std::cout << "User ID: " << i.second.userID << '\n'
+            << "Name: " << i.second.name << '\n'
+            << "Email: " << i.second.email << '\n'
+            << "-------------------------------\n";
+    }
+    adminMenu();
 }
+
 
 
 bool isValidPassword(const std::string& password) {
@@ -105,8 +111,9 @@ std::string generateUserId() {
     int suffix = 1;
 
     do {
-        userId = "User " + std::to_string(suffix);
         suffix++;
+        userId = "User " + std::to_string(suffix);
+        
     } while (users.find(userId) != users.end());
 
     return userId;
@@ -127,34 +134,54 @@ void loadUsersFromFile() {
     }
 
     std::string name, email, password, userID, joiningDateStr;
+    int lineNumber = 0;
 
-    while (file >> std::ws && std::getline(file, name) &&
+    while (file >> std::ws &&
+        std::getline(file, name) &&
         std::getline(file, email) &&
         std::getline(file, password) &&
         std::getline(file, userID) &&
         std::getline(file, joiningDateStr)) {
 
+        ++lineNumber;
+
+        if (name.empty() || email.empty() || password.empty() || userID.empty() || joiningDateStr.empty()) {
+            std::cout << "Skipped invalid record at line " << lineNumber << ".\n";
+            continue;
+        }
+
         alluser user = { name, email, password, userID, joiningDateStr };
         users[email] = user;
-        file.ignore();
+    }
+
+    if (file.bad()) {
+        std::cerr << "Error reading the file.\n";
+    }
+    else {
+        std::cout << "Users loaded successfully.\n";
     }
 }
+
 
 void saveUserToFile(const alluser& user) {
     std::ofstream file("user_data.txt", std::ios::app);
-    if (file) {
-        file << user.name << "\n" << user.email << "\n" << user.password << "\n"
-            << user.userID << "\n" << user.joiningDate << "\n"
-            << "_____________________________________________________\n\n\n\n";
+    if (!file) {
+        std::cerr << "Error saving user data to file. Please check file permissions or disk space.\n";
+        return;
+    }
 
-        std::cout << "User data saved to file.\n";
-    }
-    else {
-        std::cout << "Error saving user data to file.\n";
-    }
+    file << user.name << '\n'
+        << user.email << '\n'
+        << user.password << '\n'
+        << user.userID << '\n'
+        << user.joiningDate << '\n';
+
+    std::cout << "User data saved to file.\n";
 }
 
-// [Previous functions remain unchanged up to registerUser()]
+
+
+
 
 void registerUser() {
     alluser user;
@@ -211,7 +238,7 @@ bool loginUser() {
 
     auto it = users.find(email);
     if (it != users.end() && it->second.password == password) {
-        currentUserEmail = email; // Store email of the logged-in user
+        currentUserEmail = email; 
         std::cout << "Login successful!\n";
         return true;
     }
@@ -240,6 +267,38 @@ void endBrowsing(const std::string& userID) {
     std::cout << "Total Browsing Cost: " << browsingCost << std::endl;
 }
 
+void autodeleteUser(std::string email) {
+    
+    if (users.find(email) == users.end()) {
+        std::cout << "User with the email \"" << email << "\" has not been found.\n";
+        return;
+    }
+
+    users.erase(email);
+    std::ofstream file("user_data.txt");
+    if (!file) {
+        std::cout << "File could not load. Please try again.\n";
+        return;
+    }
+
+    for (const auto& entry : users) {
+        const alluser& user = entry.second;
+        file << user.name << "\n"
+            << user.email << "\n"
+            << user.password << "\n"
+            << user.userID << "\n"
+            << user.joiningDate << "\n";
+    }
+
+    file.close();
+    std::cout << "User with email " << email << " has been repaced \n";
+    adminMenu();
+
+}
+
+
+
+
 void deleteUser() {
     std::string email;
     std::cout << "Type the email of the user you want to delete: ";
@@ -247,14 +306,14 @@ void deleteUser() {
 
     if (users.find(email) == users.end()) {
         std::cout << "User with the email \"" << email << "\" has not been found.\n";
-        return; // Exit if the user is not found
+        return; 
     }
 
     users.erase(email);
     std::ofstream file("user_data.txt");
     if (!file) {
         std::cout << "File could not load. Please try again.\n";
-        return; // Exit if the file cannot be opened
+        return; 
     }
 
     for (const auto& entry : users) {
@@ -296,11 +355,15 @@ void editUser() {
     std::string email;
     std::cout << "Enter the email of the user you want to edit: " << std::endl;
     std::getline(std::cin, email);
-    if (users.find(email) == users.end()) {
+
+    auto it = users.find(email);
+    if (it == users.end()) {
         std::cout << "User with email \"" << email << "\" not found.\n";
         return;
     }
-    alluser& user = users[email];
+
+    alluser user = it->second; // Work with a copy to avoid invalid references
+
     int choice{};
     std::cout << "\nEditing user: " << user.name << " (" << user.email << ")\n";
     std::cout << "1) Name" << std::endl;
@@ -309,46 +372,92 @@ void editUser() {
     std::cout << "4) Cancel" << std::endl;
     std::cin >> choice;
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
     switch (choice) {
     case 1: {
         std::cout << "Enter new name: " << std::endl;
         std::getline(std::cin, user.name);
-        std::cout << "Name has been successfully updated." << std::endl;
-        adminMenu();
         break;
     }
     case 2: {
         std::string newEmail;
         std::cout << "Enter new email: " << std::endl;
         std::getline(std::cin, newEmail);
+
         if (users.find(newEmail) != users.end()) {
             std::cout << "Email \"" << newEmail << "\" is already in use by another user.\n";
             return;
         }
-        user.email = newEmail;
-        users[newEmail] = user;
+
         users.erase(email);
-        std::cout << "Email updated successfully.\n";
-        adminMenu();
+        autodeleteUser(email);
+        user.email = newEmail;
+        email = newEmail;
         break;
     }
     case 3: {
         std::cout << "Enter new password: " << std::endl;
         std::getline(std::cin, user.password);
-        std::cout << "Password has been successfully updated." << std::endl;
-        adminMenu();
         break;
     }
     case 4:
-        std::cout << "Edit cancelled." << std::endl;
-        adminMenu();
+        std::cout << "Edit cancelled.\n";
         return;
     default:
-        std::cout << "Invalid choice." << std::endl;
-        adminMenu();
+        std::cout << "Invalid choice.\n";
         return;
     }
+
+    users[email] = user; // Save updated user back into the map
+    saveUserToFile(user); // Persist changes
+    std::cout << "User information successfully updated.\n";
+    adminMenu();
 }
+
+
+void viewBills(std::string email) {
+    
+
+    std::ifstream billFile("bill.txt");
+    if (!billFile) {
+        std::cout << "Could not open bill file.\n";
+        return;
+    }
+
+    bool foundBills = false;
+    std::string line;
+    while (std::getline(billFile, line)) {
+        
+        if (line.find(email) != std::string::npos) {
+            foundBills = true;
+            
+            std::cout << "------------------------------------------\n";
+            
+            std::cout << "Bill found for user with email: " << email << "\n";
+            std::cout << line << std::endl;
+            while (std::getline(billFile, line) && !line.empty()) {
+                std::cout << line << std::endl; 
+            }
+            std::cout << "------------------------------------------\n";
+        }
+    }
+
+    if (!foundBills) {
+        std::cout << "No bills found for the user with email: " << email << "\n";
+    }
+    billFile.close();
+    mainMenu(); 
+}
+
+
+
+
+
+
+
+
+
+
 
 void viewUserBills() {
     std::string email;
@@ -364,11 +473,11 @@ void viewUserBills() {
     bool foundBills = false;
     std::string line;
     while (std::getline(billFile, line)) {
-        // Check if the current line contains the user's email
+      
         if (line.find(email) != std::string::npos) {
             foundBills = true;
             std::cout << "Bill found for user with email: " << email << "\n";
-            std::cout << line << std::endl;  // Print the email (part of the bill header)
+            std::cout << line << std::endl;  
             while (std::getline(billFile, line) && !line.empty()) {
                 std::cout << line << std::endl;  // Print all lines of the bill
             }
@@ -390,7 +499,7 @@ void adminMenu() {
     std::cout << "1) View all users\n";
     std::cout << "2) Delete a user\n";
     std::cout << "3) Edit a user\n";
-    std::cout << "4) View paid bills\n";
+    std::cout << "4) View bills\n";
     std::cout << "5) Exit\n";
     std::cin >> choice;
     std::cin.ignore();
@@ -465,6 +574,8 @@ void logoutUser(const std::string& userID) {
 
         Billdoc(email, printCost, scanCost, internetCost, totalDebt);
 
+        
+
         std::cout << "Logging out...\n";
         mainMenu();
     }
@@ -476,13 +587,13 @@ void logoutUser(const std::string& userID) {
 void processPrintAndScan(const std::string& userID) {
     int printPages, scanPages;
 
-    // Input pages printed and scanned
+   
     std::cout << "Enter number of pages printed: ";
     std::cin >> printPages;
     std::cout << "Enter number of pages scanned: ";
     std::cin >> scanPages;
 
-    // Calculate costs
+    
     double printCost = printPages * printCostPerPage;
     double scanCost = scanPages * scanCostPerPage;
 
@@ -565,7 +676,17 @@ void mainMenu() {
 
                         case 3: endBrowsing(user.userID); break;
 
-                        case 4: logoutUser(user.userID); break;
+                        case 4: 
+                            
+                            viewBills(user.email);
+                            
+                            logoutUser(user.userID); 
+
+                            
+                            
+                            
+                            
+                            break;
 
                         }
                     }

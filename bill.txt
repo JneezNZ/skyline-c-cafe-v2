@@ -1,24 +1,24 @@
-Account: test10@test.com
-Print: NZD 80
-Scan: NZD 78
+Account: testfinal@test.com
+Print: NZD 199.8
+Scan: NZD 99.9
 Internet: NZD 0
 
-Total Outstanding: NZD 158
+Total Outstanding: NZD 299.7
 _____________________________________________________
 
-Account: test1@gmail.com
-Print: NZD 40
-Scan: NZD 23
+Account: test19@test.com
+Print: NZD 199.8
+Scan: NZD 99.9
 Internet: NZD 0
 
-Total Outstanding: NZD 63
+Total Outstanding: NZD 299.7
 _____________________________________________________
 
-Account: test1@gmail.com
-Print: NZD 480
-Scan: NZD 21.2
+Account: test19@test.com
+Print: NZD 199.8
+Scan: NZD 99.9
 Internet: NZD 0
 
-Total Outstanding: NZD 501.2
+Total Outstanding: NZD 299.7
 _____________________________________________________
 
