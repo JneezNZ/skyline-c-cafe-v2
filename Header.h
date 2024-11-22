@@ -616,7 +616,8 @@ std::string getCurrentLoggedInUserEmail() {
 
 void mainMenu() {
     int mainChoice;
-    while (true) {
+    bool k = true;
+    while (k) {
         std::cout << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
@@ -718,7 +719,8 @@ void mainMenu() {
             break;
         case 4:
             std::cout << "Exiting the program. Goodbye!\n";
-            return;
+            k = false;
+            break;
         default:
             std::cout << "Invalid choice, please try again.\n";
             break;
