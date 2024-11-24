@@ -22,3 +22,11 @@ Internet: NZD 0
 Total Outstanding: NZD 299.7
 _____________________________________________________
 
+Account: sub@gmail.com
+Print: NZD 4000
+Scan: NZD 122.2
+Internet: NZD 0
+
+Total Outstanding: NZD 4122.2
+_____________________________________________________
+

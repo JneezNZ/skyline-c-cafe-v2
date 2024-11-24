@@ -693,7 +693,7 @@ void mainMenu() {
                     }
                 }
             }
-
+            break;
         }
         case 3:
             if (loginAdmin()) {
@@ -715,6 +715,7 @@ void mainMenu() {
                     default: std::cout << "Invalid choice\n"; break;
                     }
                 }
+
             }
             break;
         case 4:
